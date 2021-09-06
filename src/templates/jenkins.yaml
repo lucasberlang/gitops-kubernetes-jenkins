@@ -1,0 +1,353 @@
+# Copyright 2020 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+controller:
+  # Used for label app.kubernetes.io/component
+  componentName: "jenkins-controller"
+  image: "jenkins/jenkins"
+  imagePullPolicy: "Always"
+  adminSecret: true
+  adminUser: "admin"
+  jenkinsUrl: "http://${kubernetes_endpoint}:80"
+  containerEnv:
+    - name: kubernetes_endpoint
+      valueFrom:
+        secretKeyRef:
+            name: jenkins-k8s-config
+            key: kubernetes_endpoint
+    - name: gitlab_username
+      valueFrom:
+        secretKeyRef:
+            name: gitlab-credentials
+            key: gitlab_username
+    - name: gitlab_ssh_key
+      valueFrom:
+        secretKeyRef:
+            name: gitlab-credentials
+            key: gitlab_ssh_key
+    - name: vault_token
+      valueFrom:
+        secretKeyRef:
+            name: vault-credentials
+            key: vault_token
+    - name: vault_addr
+      valueFrom:
+        secretKeyRef:
+            name: vault-credentials
+            key: vault_addr
+    - name: arm_access_key
+      valueFrom:
+        secretKeyRef:
+            name: azure-credentials
+            key: arm_access_key
+    - name: slack_token
+      valueFrom:
+        secretKeyRef:
+            name: slack-credentials
+            key: slack_token
+    - name: team_domain
+      valueFrom:
+        secretKeyRef:
+            name: slack-credentials
+            key: team_domain            
+  servicePort: 80
+  serviceType: LoadBalancer
+  installPlugins:
+    - kubernetes
+    - docker-custom-build-environment
+    - ansicolor
+    - aws-credentials
+    - azure-credentials
+    - gitlab-api
+    - gitlab-branch-source
+    - docker-java-api
+    - github-branch-source
+    - pipeline-graph-analysis
+    - ssh-credentials
+    - pipeline-build-step
+    - job-dsl
+    - timestamper
+    - pipeline-model-extensions
+    - ldap
+    - htmlpublisher
+    - github-api
+    - handy-uri-templates-2-api
+    - docker-plugin
+    - cloudbees-folder
+    - ssh-slaves
+    - blueocean-rest-impl
+    - handlebars
+    - variant
+    - ws-cleanup
+    - apache-httpcomponents-client-4-api
+    - blueocean-git-pipeline
+    - pipeline-github-lib
+    - jquery-detached
+    - credentials
+    - blueocean-core-js
+    - pipeline-model-definition
+    - ace-editor
+    - credentials-binding
+    - favorite
+    - branch-api
+    - blueocean-pipeline-scm-api
+    - workflow-step-api
+    - blueocean-pipeline-editor
+    - jackson2-api
+    - workflow-cps
+    - build-timeout
+    - external-monitor-job
+    - lockable-resources
+    - workflow-multibranch
+    - display-url-api
+    - blueocean-dashboard
+    - blueocean-commons
+    - blueocean-events
+    - blueocean-jira
+    - jdk-tool
+    - workflow-job
+    - pipeline-milestone-step
+    - maven-plugin
+    - conditional-buildstep
+    - ant
+    - mailer
+    - workflow-cps-global-lib
+    - blueocean-web
+    - workflow-scm-step
+    - built-on-column
+    - blueocean-bitbucket-pipeline
+    - git-client
+    - momentjs
+    - command-launcher
+    - blueocean-display-url
+    - authentication-tokens
+    - workflow-api
+    - workflow-durable-task-step
+    - mercurial
+    - script-security
+    - durable-task
+    - sse-gateway
+    - pubsub-light
+    - javadoc
+    - scm-api
+    - envinject-api
+    - plain-credentials
+    - workflow-support
+    - authorize-project
+    - pam-auth
+    - bouncycastle-api
+    - git-server
+    - blueocean-config
+    - pipeline-stage-view
+    - blueocean-rest
+    - blueocean-autofavorite
+    - docker-workflow
+    - git
+    - jsch
+    - pipeline-input-step
+    - jenkins-design-language
+    - pipeline-rest-api
+    - matrix-project
+    - pipeline-model-api
+    - jenkins-multijob-plugin
+    - github
+    - matrix-auth
+    - antisamy-markup-formatter
+    - jira
+    - blueocean-github-pipeline
+    - trilead-api
+    - parameterized-trigger
+    - structs
+    - blueocean-i18n
+    - blueocean-pipeline-api-impl
+    - pipeline-stage-tags-metadata
+    - docker-commons
+    - workflow-aggregator
+    - blueocean
+    - run-condition
+    - windows-slaves
+    - workflow-basic-steps
+    - cloudbees-bitbucket-branch-source
+    - resource-disposer
+    - blueocean-personalization
+    - envinject
+    - token-macro
+    - junit
+    - blueocean-jwt
+    - pipeline-stage-step
+    - slack
+    - hashicorp-vault-plugin
+    - configuration-as-code
+    - configuration-as-code-groovy
+    - prometheus
+  JCasC:
+    enabled: true
+    configScripts:
+      cloud: |
+        jenkins:
+          clouds:
+            - kubernetes:
+                name: "terraform-executors"
+                serverUrl: "https://kubernetes.default"
+                jenkinsTunnel: "jenkins-agent:50000"
+                jenkinsUrl: "http://jenkins:80"
+                skipTlsVerify: true
+                namespace: "gitops"
+                templates:
+                    - name: "jenkins-jnlp"
+                      namespace: "gitops"
+                      nodeUsageMode: NORMAL
+                      label: "jnlp-exec"
+                      containers:
+                        - name: "jnlp"
+                          image: "jenkins/jnlp-slave"
+                          alwaysPullImage: false
+                          workingDir: "/home/jenkins/agent"
+                          ttyEnabled: true
+                          command: ""
+                          args: ""
+                          resourceRequestCpu: "500m"
+                          resourceLimitCpu: "1000m"
+                          resourceRequestMemory: "1Gi"
+                          resourceLimitMemory: "2Gi"
+                      volumes:
+                        - emptyDirVolume:
+                            memory: false
+                            mountPath: "/tmp"
+                      idleMinutes: "1"
+                      activeDeadlineSeconds: "120"
+                      slaveConnectTimeout: "1000"
+                    - name: "terraform"
+                      namespace: "gitops"
+                      nodeUsageMode: NORMAL
+                      label: "terraform-exec"
+                      containers:
+                        - name: "terraform"
+                          image: "lucasbluetab/jnlp-agent-terraform-gcloud:latest"
+                          alwaysPullImage: false
+                          workingDir: "/home/jenkins/agent"
+                          ttyEnabled: true
+                          command: "/bin/sh -c"
+                          args: "cat"
+                          resourceRequestCpu: "100m"
+                          resourceLimitCpu: "500m"
+                          resourceRequestMemory: "500Mi"
+                          resourceLimitMemory: "1Gi"
+                      volumes:
+                        - emptyDirVolume:
+                            memory: false
+                            mountPath: "/tmp"
+                      podRetention: "never"
+                      activeDeadlineSeconds: "900"
+                      slaveConnectTimeout: "1000"
+      credentials: |
+          credentials:
+              system:
+                  domainCredentials:
+                  - credentials:
+                    - basicSSHUserPrivateKey:
+                        scope: GLOBAL
+                        id: "GitLab"
+                        username: ${gitlab_username}
+                        passphrase: ""
+                        privateKeySource:
+                          directEntry:
+                            privateKey: ${gitlab_ssh_key}
+                    - string:
+                        scope: GLOBAL
+                        id: vaultUrl
+                        secret: ${vault_addr}
+                    - string:
+                        scope: GLOBAL
+                        id: vaultToken
+                        secret: "${vault_token}"
+                    - string:
+                        scope: GLOBAL
+                        id: azureARMKey
+                        secret: "${arm_access_key}"
+                    - string:
+                        scope: GLOBAL
+                        id: slackToken
+                        secret: "${slack_token}"
+                    - string:
+                        scope: GLOBAL
+                        id: teamDomain
+                        secret: "${team_domain}"
+      securityenvinject: |
+        security:
+          envinject:
+            enableLoadingFromMaster: false
+            enablePermissions: false
+            hideInjectedVars: true
+      unclassified: |
+        unclassified:
+          slackNotifier:
+            teamDomain: bluetabmundo
+            room: "#jenkins"
+            tokenCredentialId: slackToken
+      scriptgroovy: |
+        groovy:
+          - script: >
+              import jenkins.model.*;
+              import jenkins.security.*;
+              import hudson.security.*;
+              import hudson.model.*;
+              import static groovy.json.JsonOutput.*;
+              import hudson.ExtensionList;
+
+              ExtensionList<UpdateSiteWarningsConfiguration> configurations = ExtensionList.lookup(UpdateSiteWarningsConfiguration.class);
+              println configurations;
+              
+              UpdateSiteWarningsConfiguration configuration = configurations.get(0);
+              HashSet<UpdateSite.Warning> activeWarnings = new HashSet<>();
+              
+              activeWarnings.add('SECURITY-248');
+              
+              configuration.ignoredWarnings = activeWarnings;
+              
+              configuration.save();
+      init-jobs: |
+            jobs:
+              - script: >
+                  folder('terraform')
+              - script: >
+                  multibranchPipelineJob('terraform/azure-test') {
+                      branchSources {
+                          branchSource {
+                              source {
+                                  git {
+                                      remote('https://github.com/lucasberlang/terraform-azure-test.git')
+                                  }
+                              }
+                              strategy {
+                                  defaultBranchPropertyStrategy {
+                                      props {
+                                          noTriggerBranchProperty()
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                      configure {
+                          it / sources / data / 'jenkins.branch.BranchSource' / source / traits {
+                            'jenkins.plugins.git.traits.BranchDiscoveryTrait'()
+                          }
+                      }
+                      triggers {
+                          periodic(60)
+                      }
+                  }
+    authorizationStrategy: |-
+      loggedInUsersCanDoAnything:
+        allowAnonymousRead: false
