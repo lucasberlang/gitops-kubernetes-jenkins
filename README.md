@@ -34,9 +34,13 @@
 
 ## **Introducción**
 
-En este artículo de la [práctica cloud](https://bluetab.net) veremos cómo crear una plataforma de CI/CD de una forma totalmente automatizada. Para ello nos apoyaremos en una metodología GitOps para así realizar nuestro despliegues de una forma más sencilla, escalable y automatizada.
+En este artículo de la [práctica cloud](https://bluetab.net) veremos cómo crear una plataforma de CI/CD de una forma totalmente automatizada. Para ello nos apoyaremos en una metodología GitOps para así realizar nuestros despliegues de una forma más sencilla, escalable e industrializada.
 
-La idea de este taller es crearnos un cluster de GKE donde tengamos desplegado Jenkins como nuestra pieza central de CI/CD y que este vaya escalando en [agentes](https://plugins.jenkins.io/kubernetes/) de una forma totalmente automatizada para que según la demanda de ejecuciones de jobs nuestro cluster crezca o decrezca de una forma transparente para nosotros.
+La idea de este taller es crearnos un cluster de GKE donde tengamos desplegado Jenkins como nuestra pieza central de CI/CD y que este vaya escalando en [agentes](https://plugins.jenkins.io/kubernetes/) de una forma totalmente automatizada para que según la demanda de ejecuciones de jobs nuestro cluster crezca o decrezca de una forma transparente para nosotros. Otra de las grandes ventajas de esta arquitectura es que podemos crear diferentes tipos de slaves para así cubrir todo tipo de ejecuciones dentro de nuestra compañía.
+
+<br/>
+<h1 align="center"><img src="./img/jenkins-kubernetes.png"/></h1>
+<br/>
 
 Los componentes/herramientas que usaremos en este proyecto serán los siguientes:
 
